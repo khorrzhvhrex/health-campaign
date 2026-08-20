@@ -2827,12 +2827,15 @@ function exportCampaign() {
             new Date().toISOString(),
 
         data: {
-            currentWeight:
-                currentWeight,
-
-            history:
-                history
-        }
+             currentWeight:
+                 currentWeight,
+         
+             history:
+                 history,
+         
+             achievements:
+                 getUnlockedAchievements()
+         }
     };
 
     const json =
@@ -3080,6 +3083,24 @@ function validateBackup(
         );
     }
 
+   if (
+       backup.data.achievements !==
+           undefined &&
+       (
+           typeof backup.data.achievements !==
+               "object" ||
+           backup.data.achievements ===
+               null ||
+           Array.isArray(
+               backup.data.achievements
+           )
+       )
+   ) {
+   
+       throw new Error(
+           "Achievement data is invalid."
+       );
+   }
 
     const weight =
         Number(
@@ -3217,12 +3238,19 @@ function showImportPreview(
         ).length;
 
     const weight =
-        Number(
-            backup.data
-                .currentWeight
-        );
-
-    const exportDate =
+       Number(
+           backup.data
+               .currentWeight
+       );
+   
+   const achievements =
+       backup.data.achievements
+       ? Object.keys(
+           backup.data.achievements
+         ).length
+       : 0;
+   
+   const exportDate =
         new Date(
             backup.exportedAt
         );
@@ -3249,7 +3277,11 @@ function showImportPreview(
             Daily records:
             ${records}
             <br>
-
+            
+            Achievements:
+            ${achievements}
+            <br>
+            
             Exported:
             ${prettyDate}
         </p>
@@ -3334,18 +3366,56 @@ function confirmImport() {
     );
 
 
-    localStorage.setItem(
-        "health-weight",
-        String(
-            currentWeight
-        )
-    );
-
-
-    /*
-      Make sure today's record
-      exists after import.
-    */
+   localStorage.setItem(
+       "health-weight",
+       String(
+           currentWeight
+       )
+   );
+   
+   
+   /*
+     Restore permanent achievement
+     unlocks when included in the backup.
+   */
+   
+   if (
+       pendingImport.data
+           .achievements &&
+       typeof pendingImport.data
+           .achievements ===
+           "object"
+   ) {
+   
+       localStorage.setItem(
+           "health-achievements",
+           JSON.stringify(
+               pendingImport.data
+                   .achievements
+           )
+       );
+   }
+   
+   else {
+   
+       /*
+         Older v1 backups did not
+         include achievement data.
+         Clear existing unlocks so
+         they can be reconstructed
+         from imported history.
+       */
+   
+       localStorage.removeItem(
+           "health-achievements"
+       );
+   }
+   
+   
+   /*
+     Make sure today's record
+     exists after import.
+   */
 
     if (!history[TODAY]) {
 
