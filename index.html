@@ -507,6 +507,95 @@ button {
 
 /* HISTORY */
 
+.weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 10px;
+    margin-bottom: 13px;
+}
+
+.weekly-weight {
+    background: var(--panel2);
+    border-radius: 11px;
+    padding: 11px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: .84rem;
+}
+
+.journal-entry {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+}
+
+.journal-entry:last-child {
+    border-bottom: 0;
+}
+
+.journal-entry.perfect {
+    background: rgba(250,204,21,.05);
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 10px;
+}
+
+.journal-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.journal-date {
+    font-weight: 800;
+}
+
+.journal-xp {
+    color: var(--green);
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.journal-perfect {
+    color: var(--gold);
+    font-size: .74rem;
+    font-weight: 800;
+    margin-top: 3px;
+}
+
+.journal-meta {
+    color: var(--muted);
+    font-size: .8rem;
+    margin-top: 5px;
+}
+
+.journal-events {
+    margin-top: 9px;
+    display: grid;
+    gap: 6px;
+}
+
+.journal-event {
+    background: var(--panel2);
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-size: .8rem;
+}
+
+.journal-event.achievement {
+    border-left: 3px solid var(--gold);
+}
+
+.journal-event.level {
+    border-left: 3px solid var(--blue);
+}
+
+.journal-event.boss {
+    border-left: 3px solid var(--green);
+}
+
 .history-entry {
     border-bottom: 1px solid var(--border);
     padding: 12px 0;
@@ -1008,17 +1097,79 @@ button {
         id="historyView"
         class="hidden"
     >
-
+    
         <section class="card">
-
+    
             <h2 class="section-title">
-                Recent Days
+                📊 Last 7 Days
             </h2>
-
-            <div id="historyList"></div>
-
+    
+            <div class="weekly-grid">
+    
+                <div class="stat-box">
+                    <strong id="weekAverageXP">
+                        0
+                    </strong>
+                    <span>AVG DAILY XP</span>
+                </div>
+    
+                <div class="stat-box">
+                    <strong id="weekQuestCount">
+                        0
+                    </strong>
+                    <span>QUESTS DONE</span>
+                </div>
+    
+                <div class="stat-box">
+                    <strong id="weekPerfectDays">
+                        0
+                    </strong>
+                    <span>PERFECT DAYS</span>
+                </div>
+    
+                <div class="stat-box">
+                    <strong id="weekHydrationDays">
+                        0
+                    </strong>
+                    <span>HYDRATION HITS</span>
+                </div>
+    
+                <div class="stat-box">
+                    <strong id="weekLunchDays">
+                        0
+                    </strong>
+                    <span>PLANNED LUNCHES</span>
+                </div>
+    
+                <div class="stat-box">
+                    <strong id="weekActivityDays">
+                        0
+                    </strong>
+                    <span>ACTIVE DAYS</span>
+                </div>
+    
+            </div>
+    
+            <div
+                class="weekly-weight"
+                id="weekWeightSummary"
+            >
+                No weekly weight trend yet.
+            </div>
+    
         </section>
-
+    
+    
+        <section class="card">
+    
+            <h2 class="section-title">
+                📜 Campaign Journal
+            </h2>
+    
+            <div id="historyList"></div>
+    
+        </section>
+    
     </main>
 
 
@@ -3604,37 +3755,654 @@ function updateBossUI() {
 
 
 /* ============================
+   WEEKLY HISTORY HELPERS
+============================ */
+
+function recentDateKeys(
+    count
+) {
+
+    const dates = [];
+
+    const cursor =
+        new Date();
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        dates.push(
+            localDateKey(
+                cursor
+            )
+        );
+
+        cursor.setDate(
+            cursor.getDate() - 1
+        );
+    }
+
+
+    return dates.reverse();
+}
+
+
+function questCountForRecord(
+    record
+) {
+
+    if (
+        !record ||
+        !Array.isArray(
+            record.quests
+        )
+    ) {
+
+        return 0;
+    }
+
+
+    return record.quests
+        .filter(Boolean)
+        .length;
+}
+
+
+function renderWeeklySummary() {
+
+    const keys =
+        recentDateKeys(7);
+
+
+    const records =
+        keys.map(
+            key => ({
+                date: key,
+                record:
+                    history[key] || null
+            })
+        );
+
+
+    const totalXP =
+        records.reduce(
+            (sum, item) =>
+                sum +
+                recordXP(
+                    item.record
+                ),
+            0
+        );
+
+
+    const averageXP =
+        Math.round(
+            totalXP / 7
+        );
+
+
+    const totalQuests =
+        records.reduce(
+            (sum, item) =>
+                sum +
+                questCountForRecord(
+                    item.record
+                ),
+            0
+        );
+
+
+    const perfectDays =
+        records.filter(
+            item =>
+                recordXP(
+                    item.record
+                ) === 100
+        ).length;
+
+
+    const hydrationIndex =
+        QUESTS.findIndex(
+            quest =>
+                quest.id ===
+                "hydration"
+        );
+
+
+    const lunchIndex =
+        QUESTS.findIndex(
+            quest =>
+                quest.id ===
+                "lunch"
+        );
+
+
+    const activityIndex =
+        QUESTS.findIndex(
+            quest =>
+                quest.id ===
+                "activity"
+        );
+
+
+    const hydrationDays =
+        records.filter(
+            item =>
+                item.record &&
+                Array.isArray(
+                    item.record.quests
+                ) &&
+                item.record.quests[
+                    hydrationIndex
+                ] === true
+        ).length;
+
+
+    const lunchDays =
+        records.filter(
+            item =>
+                item.record &&
+                Array.isArray(
+                    item.record.quests
+                ) &&
+                item.record.quests[
+                    lunchIndex
+                ] === true
+        ).length;
+
+
+    const activityDays =
+        records.filter(
+            item =>
+                item.record &&
+                Array.isArray(
+                    item.record.quests
+                ) &&
+                item.record.quests[
+                    activityIndex
+                ] === true
+        ).length;
+
+
+    document
+    .getElementById(
+        "weekAverageXP"
+    )
+    .textContent =
+        averageXP;
+
+
+    document
+    .getElementById(
+        "weekQuestCount"
+    )
+    .textContent =
+        totalQuests;
+
+
+    document
+    .getElementById(
+        "weekPerfectDays"
+    )
+    .textContent =
+        perfectDays;
+
+
+    document
+    .getElementById(
+        "weekHydrationDays"
+    )
+    .textContent =
+        hydrationDays;
+
+
+    document
+    .getElementById(
+        "weekLunchDays"
+    )
+    .textContent =
+        lunchDays;
+
+
+    document
+    .getElementById(
+        "weekActivityDays"
+    )
+    .textContent =
+        activityDays;
+
+
+    renderWeeklyWeightTrend(
+        records
+    );
+}
+
+
+function renderWeeklyWeightTrend(
+    records
+) {
+
+    const weighIns =
+        records
+        .filter(
+            item =>
+                item.record &&
+                item.record.weight !==
+                    undefined
+        )
+        .map(
+            item => ({
+                date:
+                    item.date,
+
+                weight:
+                    Number(
+                        item.record.weight
+                    )
+            })
+        )
+        .filter(
+            item =>
+                Number.isFinite(
+                    item.weight
+                )
+        );
+
+
+    const element =
+        document.getElementById(
+            "weekWeightSummary"
+        );
+
+
+    if (
+        weighIns.length < 2
+    ) {
+
+        element.textContent =
+            weighIns.length === 1
+            ? `One weigh-in this week: ${weighIns[0].weight.toFixed(1)} lb`
+            : "No weekly weight trend yet.";
+
+        return;
+    }
+
+
+    const first =
+        weighIns[0];
+
+    const last =
+        weighIns[
+            weighIns.length - 1
+        ];
+
+
+    const change =
+        last.weight -
+        first.weight;
+
+
+    let direction =
+        "No change";
+
+
+    if (
+        change < 0
+    ) {
+
+        direction =
+            `Down ${Math.abs(change).toFixed(1)} lb`;
+    }
+
+    else if (
+        change > 0
+    ) {
+
+        direction =
+            `Up ${change.toFixed(1)} lb`;
+    }
+
+
+    element.innerHTML = `
+        <strong>
+            Weekly weight:
+            ${first.weight.toFixed(1)}
+            →
+            ${last.weight.toFixed(1)} lb
+        </strong>
+
+        <br>
+
+        ${direction}
+        across
+        ${weighIns.length}
+        weigh-ins.
+    `;
+}
+
+
+/* ============================
+   CAMPAIGN JOURNAL EVENTS
+============================ */
+
+function achievementEventsByDate() {
+
+    const events = {};
+
+    const unlocked =
+        getUnlockedAchievements();
+
+
+    Object.entries(
+        unlocked
+    )
+    .forEach(
+        ([id, data]) => {
+
+            if (
+                !data ||
+                !data.unlockedAt
+            ) {
+
+                return;
+            }
+
+
+            const achievement =
+                ACHIEVEMENTS.find(
+                    item =>
+                        item.id === id
+                );
+
+
+            if (!achievement) {
+                return;
+            }
+
+
+            const unlockDate =
+                new Date(
+                    data.unlockedAt
+                );
+
+
+            if (
+                Number.isNaN(
+                    unlockDate.getTime()
+                )
+            ) {
+
+                return;
+            }
+
+
+            const key =
+                localDateKey(
+                    unlockDate
+                );
+
+
+            if (!events[key]) {
+                events[key] = [];
+            }
+
+
+            events[key].push({
+                type:
+                    "achievement",
+
+                text:
+                    `🏆 ${achievement.name}`
+            });
+        }
+    );
+
+
+    return events;
+}
+
+
+function levelEventsByDate() {
+
+    const events = {};
+
+    const entries =
+        allHistoryEntries();
+
+
+    let cumulativeXP = 0;
+
+    let previousLevel = 1;
+
+
+    entries.forEach(
+        ([date, record]) => {
+
+            cumulativeXP +=
+                recordXP(record);
+
+
+            const level =
+                Math.floor(
+                    cumulativeXP / 500
+                ) + 1;
+
+
+            if (
+                level >
+                previousLevel
+            ) {
+
+                if (!events[date]) {
+                    events[date] = [];
+                }
+
+
+                for (
+                    let reached =
+                        previousLevel + 1;
+
+                    reached <= level;
+                    reached++
+                ) {
+
+                    events[date].push({
+                        type:
+                            "level",
+
+                        text:
+                            `⚔️ Level ${reached} reached`
+                    });
+                }
+            }
+
+
+            previousLevel =
+                level;
+        }
+    );
+
+
+    return events;
+}
+
+
+function bossEventsByDate() {
+
+    const events = {};
+
+    const entries =
+        allHistoryEntries();
+
+
+    const defeated =
+        new Set();
+
+
+    entries.forEach(
+        ([date, record]) => {
+
+            if (
+                record.weight ===
+                    undefined
+            ) {
+
+                return;
+            }
+
+
+            const weight =
+                Number(
+                    record.weight
+                );
+
+
+            if (
+                !Number.isFinite(
+                    weight
+                )
+            ) {
+
+                return;
+            }
+
+
+            BOSSES.forEach(
+                boss => {
+
+                    if (
+                        defeated.has(
+                            boss.target
+                        )
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        weight <=
+                        boss.target
+                    ) {
+
+                        defeated.add(
+                            boss.target
+                        );
+
+
+                        if (!events[date]) {
+                            events[date] = [];
+                        }
+
+
+                        events[date].push({
+                            type:
+                                "boss",
+
+                            text:
+                                `👹 BOSS DEFEATED — ${boss.name}`
+                        });
+                    }
+                }
+            );
+        }
+    );
+
+
+    return events;
+}
+
+
+function combinedJournalEvents() {
+
+    const maps = [
+        achievementEventsByDate(),
+        levelEventsByDate(),
+        bossEventsByDate()
+    ];
+
+
+    const combined = {};
+
+
+    maps.forEach(
+        map => {
+
+            Object.entries(
+                map
+            )
+            .forEach(
+                ([date, events]) => {
+
+                    if (
+                        !combined[date]
+                    ) {
+
+                        combined[date] =
+                            [];
+                    }
+
+
+                    combined[date]
+                        .push(
+                            ...events
+                        );
+                }
+            );
+        }
+    );
+
+
+    return combined;
+}
+
+
+/* ============================
    HISTORY VIEW
 ============================ */
 
 function renderHistory() {
+
+    renderWeeklySummary();
+
 
     const container =
         document.getElementById(
             "historyList"
         );
 
+
     const entries =
         Object.entries(history)
         .sort(
             ([a], [b]) =>
                 b.localeCompare(a)
-        )
-        .slice(0, 30);
+        );
+
+
+    const journalEvents =
+        combinedJournalEvents();
+
 
     container.innerHTML = "";
+
 
     if (
         entries.length === 0
     ) {
 
-        container.innerHTML =
-            `<p class="muted small">
+        container.innerHTML = `
+            <p class="muted small">
                 No campaign records yet.
-            </p>`;
+            </p>
+        `;
 
         return;
     }
+
 
     entries.forEach(
         ([date, record]) => {
@@ -3642,28 +4410,38 @@ function renderHistory() {
             const xp =
                 recordXP(record);
 
+
             const completed =
-                Array.isArray(
-                    record.quests
-                )
-                ? record.quests
-                    .filter(Boolean)
-                    .length
-                : 0;
+                questCountForRecord(
+                    record
+                );
+
+
+            const isPerfect =
+                xp === 100;
+
 
             const div =
                 document.createElement(
                     "div"
                 );
 
+
             div.className =
-                "history-entry";
+                "journal-entry" +
+                (
+                    isPerfect
+                    ? " perfect"
+                    : ""
+                );
+
 
             const dateObj =
                 new Date(
                     date +
                     "T12:00:00"
                 );
+
 
             const pretty =
                 dateObj
@@ -3677,41 +4455,106 @@ function renderHistory() {
                             "short",
 
                         day:
+                            "numeric",
+
+                        year:
                             "numeric"
                     }
                 );
 
+
             const weightText =
-                record.weight
-                ? ` • ${Number(
+                record.weight !==
+                    undefined
+                ? ` • ⚖️ ${Number(
                     record.weight
                   ).toFixed(1)} lb`
                 : "";
 
+
+            const waterText =
+                `💧 ${Number(
+                    record.water || 0
+                )} oz`;
+
+
+            const perfectText =
+                isPerfect
+                ? `
+                    <div class="journal-perfect">
+                        ✨ PERFECT DAY
+                    </div>
+                `
+                : "";
+
+
+            const events =
+                journalEvents[
+                    date
+                ] || [];
+
+
+            const eventHTML =
+                events.length > 0
+                ? `
+                    <div class="journal-events">
+
+                        ${events.map(
+                            event => `
+                                <div
+                                    class="journal-event ${event.type}"
+                                >
+                                    ${event.text}
+                                </div>
+                            `
+                        ).join("")}
+
+                    </div>
+                `
+                : "";
+
+
             div.innerHTML = `
-                <div class="history-top">
+                <div class="journal-header">
 
-                    <span class="history-date">
-                        ${pretty}
-                    </span>
+                    <div>
 
-                    <span class="history-xp">
+                        <div class="journal-date">
+                            ${pretty}
+                        </div>
+
+                        ${perfectText}
+
+                    </div>
+
+                    <div class="journal-xp">
                         ${xp} XP
-                    </span>
+                    </div>
 
                 </div>
 
-                <div class="history-meta">
+
+                <div class="journal-meta">
+
                     ${completed}/5 quests
+
                     •
-                    ${record.water || 0} oz
+
+                    ${waterText}
+
                     ${weightText}
+
                 </div>
+
+
+                ${eventHTML}
             `;
 
-            container.appendChild(
-                div
-            );
+
+            container
+                .appendChild(
+                    div
+                );
         }
     );
 }
