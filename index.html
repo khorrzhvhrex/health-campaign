@@ -2359,7 +2359,21 @@ function exportCampaign() {
     URL.revokeObjectURL(
         url
     );
-
+    
+    
+    const exportedAt =
+        new Date().toISOString();
+    
+    
+    localStorage.setItem(
+        "health-last-export",
+        exportedAt
+    );
+    
+    
+    updateLastExportDisplay();
+    
+    
     toast(
         "💾 Campaign exported"
     );
@@ -2874,6 +2888,80 @@ function cancelImport() {
 
 
 /* ============================
+   BACKUP STATUS
+============================ */
+
+function updateLastExportDisplay() {
+
+    const element =
+        document.getElementById(
+            "lastExportText"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    const stored =
+        localStorage.getItem(
+            "health-last-export"
+        );
+
+
+    if (!stored) {
+
+        element.textContent =
+            "Never";
+
+        return;
+    }
+
+
+    const date =
+        new Date(
+            stored
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        element.textContent =
+            "Unknown";
+
+        return;
+    }
+
+
+    element.textContent =
+        date.toLocaleString(
+            undefined,
+            {
+                month:
+                    "short",
+
+                day:
+                    "numeric",
+
+                year:
+                    "numeric",
+
+                hour:
+                    "numeric",
+
+                minute:
+                    "2-digit"
+            }
+        );
+}
+
+
+/* ============================
    INITIALIZE
 ============================ */
 
@@ -2900,6 +2988,8 @@ document
 buildQuestList();
 
 updateUI();
+
+updateLastExportDisplay();
 
 </script>
 
