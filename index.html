@@ -594,6 +594,87 @@ button {
     margin-top: 5px;
 }
 
+/* ACHIEVEMENTS */
+
+.achievement-summary {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.achievement-summary div {
+    background: var(--panel2);
+    border-radius: 11px;
+    padding: 10px;
+}
+
+.achievement-summary strong {
+    display: block;
+    font-size: 1.15rem;
+}
+
+.recent-achievement {
+    margin: 13px 0;
+}
+
+.achievement-item {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+}
+
+.achievement-item:last-child {
+    border-bottom: 0;
+}
+
+.achievement-top {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.achievement-icon {
+    width: 32px;
+    flex: 0 0 auto;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-weight: 750;
+}
+
+.achievement-description {
+    color: var(--muted);
+    font-size: .8rem;
+    margin-top: 3px;
+}
+
+.achievement-locked {
+    opacity: .48;
+}
+
+.achievement-date {
+    color: var(--green);
+    font-size: .75rem;
+    margin-top: 4px;
+}
+
+.recent-unlock {
+    background: var(--green-soft);
+    border: 1px solid rgba(34,197,94,.4);
+    border-radius: 11px;
+    padding: 11px;
+}
+
+.recent-unlock strong {
+    color: #bbf7d0;
+}
+
 /* NAV */
 
 .bottom-nav {
@@ -989,6 +1070,64 @@ button {
 
             <div id="milestoneList"></div>
 
+        </section>
+
+
+        <section class="card">
+
+            <h2 class="section-title">
+                🏆 Achievements
+            </h2>
+        
+            <div class="achievement-summary">
+        
+                <div>
+                    <strong id="achievementCount">
+                        0 / 0
+                    </strong>
+        
+                    <span class="small muted">
+                        Unlocked
+                    </span>
+                </div>
+        
+                <div>
+                    <strong id="achievementPercent">
+                        0%
+                    </strong>
+        
+                    <span class="small muted">
+                        Complete
+                    </span>
+                </div>
+        
+            </div>
+        
+            <div class="progress">
+                <div
+                    class="progress-bar"
+                    id="achievementBar"
+                ></div>
+            </div>
+        
+            <div
+                id="recentAchievement"
+                class="recent-achievement"
+            ></div>
+        
+            <button
+                class="backup-btn"
+                id="toggleAchievements"
+                type="button"
+            >
+                View Achievement Codex
+            </button>
+        
+            <div
+                id="achievementList"
+                class="achievement-list hidden"
+            ></div>
+        
         </section>
 
 
@@ -1388,6 +1527,264 @@ function playerLevel() {
         ) + 1
     );
 }
+  
+
+/* ============================
+   ACHIEVEMENT STORAGE
+============================ */
+
+function getUnlockedAchievements() {
+
+    return JSON.parse(
+        localStorage.getItem(
+            "health-achievements"
+        )
+    ) || {};
+}
+
+
+function saveUnlockedAchievements(
+    achievements
+) {
+
+    localStorage.setItem(
+        "health-achievements",
+        JSON.stringify(
+            achievements
+        )
+    );
+}
+
+
+/* ============================
+   CAMPAIGN STAT HELPERS
+============================ */
+
+function allHistoryEntries() {
+
+    return Object.entries(history)
+        .sort(
+            ([a], [b]) =>
+                a.localeCompare(b)
+        );
+}
+
+
+function questCompletionCount(
+    questId
+) {
+
+    const index =
+        QUESTS.findIndex(
+            quest =>
+                quest.id ===
+                questId
+        );
+
+
+    if (index === -1) {
+        return 0;
+    }
+
+
+    return Object.values(history)
+        .filter(
+            record =>
+                Array.isArray(
+                    record.quests
+                ) &&
+                record.quests[index] ===
+                    true
+        )
+        .length;
+}
+
+
+function activityDayCount() {
+
+    return questCompletionCount(
+        "activity"
+    );
+}
+
+
+function hydrationDayCount() {
+
+    return questCompletionCount(
+        "hydration"
+    );
+}
+
+
+function plannedLunchCount() {
+
+    return questCompletionCount(
+        "lunch"
+    );
+}
+
+
+function junkFreeCount() {
+
+    return questCompletionCount(
+        "junk"
+    );
+}
+
+
+function vegetableDayCount() {
+
+    return questCompletionCount(
+        "vegetables"
+    );
+}
+
+
+function lowestRecordedWeight() {
+
+    const weights = [
+        currentWeight
+    ];
+
+
+    Object.values(history)
+        .forEach(
+            record => {
+
+                if (
+                    record.weight !==
+                    undefined
+                ) {
+
+                    const value =
+                        Number(
+                            record.weight
+                        );
+
+
+                    if (
+                        Number.isFinite(
+                            value
+                        )
+                    ) {
+
+                        weights.push(
+                            value
+                        );
+                    }
+                }
+            }
+        );
+
+
+    return Math.min(
+        ...weights
+    );
+}
+
+
+function poundsLostFromStart() {
+
+    return Math.max(
+        0,
+        START_WEIGHT -
+        lowestRecordedWeight()
+    );
+}
+
+
+function perfectDayCount() {
+
+    return Object.values(history)
+        .filter(
+            record =>
+                recordXP(record) ===
+                100
+        )
+        .length;
+}
+
+
+function maxHistoricalStreak() {
+
+    const dates =
+        Object.keys(history)
+        .sort();
+
+
+    let best = 0;
+    let current = 0;
+    let previousDate = null;
+
+
+    dates.forEach(
+        date => {
+
+            const record =
+                history[date];
+
+
+            if (
+                recordXP(record) === 0
+            ) {
+
+                current = 0;
+                previousDate = null;
+                return;
+            }
+
+
+            const thisDate =
+                new Date(
+                    date +
+                    "T12:00:00"
+                );
+
+
+            if (!previousDate) {
+
+                current = 1;
+            }
+
+            else {
+
+                const diff =
+                    Math.round(
+                        (
+                            thisDate -
+                            previousDate
+                        ) /
+                        86400000
+                    );
+
+
+                if (diff === 1) {
+
+                    current++;
+                }
+
+                else {
+
+                    current = 1;
+                }
+            }
+
+
+            best =
+                Math.max(
+                    best,
+                    current
+                );
+
+
+            previousDate =
+                thisDate;
+        }
+    );
+
+
+    return best;
+}
 
 
 /* ============================
@@ -1429,6 +1826,899 @@ function calculateStreak() {
     }
 
     return streak;
+}
+
+
+/* ============================
+   ACHIEVEMENTS
+============================ */
+
+const ACHIEVEMENTS = [
+
+    {
+        id: "adventure-begins",
+        tier: "bronze",
+        icon: "🟤",
+        name: "The Adventure Begins",
+        description:
+            "Earn your first XP.",
+        secret: false,
+        unlocked:
+            () =>
+                lifetimeXP() >= 1
+    },
+
+    {
+        id: "first-blood",
+        tier: "bronze",
+        icon: "🟤",
+        name: "First Blood",
+        description:
+            "Complete your first Perfect Day.",
+        secret: false,
+        unlocked:
+            () =>
+                perfectDayCount() >= 1
+    },
+
+    {
+        id: "provisioned",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Provisioned",
+        description:
+            "Complete Planned Healthy Lunch for the first time.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 1
+    },
+
+    {
+        id: "gas-station-goblins",
+        tier: "bronze",
+        icon: "🟤",
+        name: "No Gas-Station Goblins",
+        description:
+            "Complete No Unplanned Junk Run for the first time.",
+        secret: false,
+        unlocked:
+            () =>
+                junkFreeCount() >= 1
+    },
+
+    {
+        id: "touch-grass",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Touch Grass",
+        description:
+            "Complete your first Activity quest.",
+        secret: false,
+        unlocked:
+            () =>
+                activityDayCount() >= 1
+    },
+
+    {
+        id: "waterskin-equipped",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Waterskin Equipped",
+        description:
+            "Hit your hydration target for the first time.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 1
+    },
+
+    {
+        id: "eat-your-greens",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Eat Your Greens",
+        description:
+            "Complete your first Vegetables quest.",
+        secret: false,
+        unlocked:
+            () =>
+                vegetableDayCount() >= 1
+    },
+
+    {
+        id: "level-2",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Level Up!",
+        description:
+            "Reach Level 2.",
+        secret: false,
+        unlocked:
+            () =>
+                playerLevel() >= 2
+    },
+
+    {
+        id: "streak-3",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Three Days in the Wild",
+        description:
+            "Reach a 3-day streak.",
+        secret: false,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 3
+    },
+
+    {
+        id: "lunch-5",
+        tier: "bronze",
+        icon: "🟤",
+        name: "A Full Week's Rations",
+        description:
+            "Complete 5 Planned Healthy Lunch quests.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 5
+    },
+
+    {
+        id: "hydration-5",
+        tier: "bronze",
+        icon: "🟤",
+        name: "Hydromancer",
+        description:
+            "Hit your hydration target on 5 days.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 5
+    },
+
+    {
+        id: "lose-5",
+        tier: "bronze",
+        icon: "🟤",
+        name: "The First Five",
+        description:
+            "Lose 5 lb from your starting weight.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 5
+    },
+
+    {
+        id: "boss-269",
+        tier: "silver",
+        icon: "🥈",
+        name: "Break the 270 Barrier",
+        description:
+            "Reach 269 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                269
+    },
+
+    {
+        id: "lose-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Ten Pounds of Loot Dropped",
+        description:
+            "Lose 10 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 10
+    },
+
+    {
+        id: "streak-7",
+        tier: "silver",
+        icon: "🥈",
+        name: "Seven Days Strong",
+        description:
+            "Reach a 7-day streak.",
+        secret: false,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 7
+    },
+
+    {
+        id: "lunch-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Meal Prep Apprentice",
+        description:
+            "Complete 10 Planned Healthy Lunch quests.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 10
+    },
+
+    {
+        id: "junk-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Convenience Store Resistance",
+        description:
+            "Complete No Unplanned Junk Run 10 times.",
+        secret: false,
+        unlocked:
+            () =>
+                junkFreeCount() >= 10
+    },
+
+    {
+        id: "activity-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Road-Worn Boots",
+        description:
+            "Complete Activity 10 times.",
+        secret: false,
+        unlocked:
+            () =>
+                activityDayCount() >= 10
+    },
+
+    {
+        id: "hydration-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Well Hydrated Adventurer",
+        description:
+            "Hit hydration target 10 times.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 10
+    },
+
+    {
+        id: "vegetables-10",
+        tier: "silver",
+        icon: "🥈",
+        name: "Vegetable Enthusiast, Apparently",
+        description:
+            "Complete Vegetables 10 times.",
+        secret: false,
+        unlocked:
+            () =>
+                vegetableDayCount() >= 10
+    },
+
+    {
+        id: "perfect-5",
+        tier: "silver",
+        icon: "🥈",
+        name: "Five Perfect Encounters",
+        description:
+            "Accumulate 5 Perfect Days.",
+        secret: false,
+        unlocked:
+            () =>
+                perfectDayCount() >= 5
+    },
+
+    {
+        id: "level-5",
+        tier: "silver",
+        icon: "🥈",
+        name: "Level 5 Adventurer",
+        description:
+            "Reach Level 5.",
+        secret: false,
+        unlocked:
+            () =>
+                playerLevel() >= 5
+    },
+
+    {
+        id: "boss-259",
+        tier: "silver",
+        icon: "🥈",
+        name: "The 260 Gate",
+        description:
+            "Reach 259 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                259
+    },
+
+    {
+        id: "streak-14",
+        tier: "silver",
+        icon: "🥈",
+        name: "Two Weeks on the Road",
+        description:
+            "Reach a 14-day streak.",
+        secret: false,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 14
+    },
+
+    {
+        id: "lose-20",
+        tier: "silver",
+        icon: "🥈",
+        name: "Twenty Pounds Gone",
+        description:
+            "Lose 20 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 20
+    },
+
+    {
+        id: "boss-249",
+        tier: "gold",
+        icon: "🥇",
+        name: "Farewell, 250s",
+        description:
+            "Reach 249 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                249
+    },
+
+    {
+        id: "lose-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "Quarter-Century Club",
+        description:
+            "Lose 25 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 25
+    },
+
+    {
+        id: "lunch-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "Lunch Is a Meal Now",
+        description:
+            "Complete 25 Planned Healthy Lunch quests.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 25
+    },
+
+    {
+        id: "junk-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "C-Store? Never Heard of Her",
+        description:
+            "Complete No Unplanned Junk Run 25 times.",
+        secret: false,
+        unlocked:
+            () =>
+                junkFreeCount() >= 25
+    },
+
+    {
+        id: "activity-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "Constitution +2",
+        description:
+            "Complete Activity 25 times.",
+        secret: false,
+        unlocked:
+            () =>
+                activityDayCount() >= 25
+    },
+
+    {
+        id: "hydration-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "Aquatic Alignment",
+        description:
+            "Hit hydration target 25 times.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 25
+    },
+
+    {
+        id: "vegetables-25",
+        tier: "gold",
+        icon: "🥇",
+        name: "The Broccoli Pact",
+        description:
+            "Complete Vegetables 25 times.",
+        secret: false,
+        unlocked:
+            () =>
+                vegetableDayCount() >= 25
+    },
+
+    {
+        id: "perfect-10",
+        tier: "gold",
+        icon: "🥇",
+        name: "Ten Perfect Days",
+        description:
+            "Accumulate 10 Perfect Days.",
+        secret: false,
+        unlocked:
+            () =>
+                perfectDayCount() >= 10
+    },
+
+    {
+        id: "level-10",
+        tier: "gold",
+        icon: "🥇",
+        name: "Level 10 Adventurer",
+        description:
+            "Reach Level 10.",
+        secret: false,
+        unlocked:
+            () =>
+                playerLevel() >= 10
+    },
+
+    {
+        id: "streak-21",
+        tier: "gold",
+        icon: "🥇",
+        name: "Three Weeks Without a TPK",
+        description:
+            "Reach a 21-day streak.",
+        secret: false,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 21
+    },
+
+    {
+        id: "lose-30",
+        tier: "gold",
+        icon: "🥇",
+        name: "Thirty Pounds Lighter",
+        description:
+            "Lose 30 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 30
+    },
+
+    {
+        id: "boss-239",
+        tier: "gold",
+        icon: "🥇",
+        name: "Into the 230s",
+        description:
+            "Reach 239 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                239
+    },
+
+    {
+        id: "all-quests-25",
+        tier: "diamond",
+        icon: "💎",
+        name: "Habitual Adventurer",
+        description:
+            "Complete each daily quest type at least 25 times.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 25 &&
+                junkFreeCount() >= 25 &&
+                activityDayCount() >= 25 &&
+                hydrationDayCount() >= 25 &&
+                vegetableDayCount() >= 25
+    },
+
+    {
+        id: "perfect-25",
+        tier: "diamond",
+        icon: "💎",
+        name: "Perfect Month-ish",
+        description:
+            "Accumulate 25 Perfect Days.",
+        secret: false,
+        unlocked:
+            () =>
+                perfectDayCount() >= 25
+    },
+
+    {
+        id: "lunch-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "Iron Rations",
+        description:
+            "Complete 50 Planned Healthy Lunch quests.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 50
+    },
+
+    {
+        id: "junk-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "The C-Store Has Forgotten Your Name",
+        description:
+            "Complete No Unplanned Junk Run 50 times.",
+        secret: false,
+        unlocked:
+            () =>
+                junkFreeCount() >= 50
+    },
+
+    {
+        id: "activity-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "Walker, Texas Ranger",
+        description:
+            "Complete Activity 50 times.",
+        secret: false,
+        unlocked:
+            () =>
+                activityDayCount() >= 50
+    },
+
+    {
+        id: "hydration-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "Poseidon's Drinking Buddy",
+        description:
+            "Hit hydration target 50 times.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 50
+    },
+
+    {
+        id: "vegetables-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "Vegetable Arc Complete",
+        description:
+            "Complete Vegetables 50 times.",
+        secret: false,
+        unlocked:
+            () =>
+                vegetableDayCount() >= 50
+    },
+
+    {
+        id: "streak-30",
+        tier: "diamond",
+        icon: "💎",
+        name: "Thirty-Day Streak",
+        description:
+            "Reach a 30-day streak.",
+        secret: false,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 30
+    },
+
+    {
+        id: "level-15",
+        tier: "diamond",
+        icon: "💎",
+        name: "Level 15 Adventurer",
+        description:
+            "Reach Level 15.",
+        secret: false,
+        unlocked:
+            () =>
+                playerLevel() >= 15
+    },
+
+    {
+        id: "lose-40",
+        tier: "diamond",
+        icon: "💎",
+        name: "Forty Pounds Gone",
+        description:
+            "Lose 40 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 40
+    },
+
+    {
+        id: "boss-229",
+        tier: "diamond",
+        icon: "💎",
+        name: "Approach Goal Territory",
+        description:
+            "Reach 229 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                229
+    },
+
+    {
+        id: "lose-50",
+        tier: "diamond",
+        icon: "💎",
+        name: "Half-Century Down",
+        description:
+            "Lose 50 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                poundsLostFromStart() >= 50
+    },
+
+    {
+        id: "any-quest-100",
+        tier: "legendary",
+        icon: "🐉",
+        name: "The Hundred Club",
+        description:
+            "Complete any individual daily quest 100 times.",
+        secret: false,
+        unlocked:
+            () =>
+                Math.max(
+                    plannedLunchCount(),
+                    junkFreeCount(),
+                    activityDayCount(),
+                    hydrationDayCount(),
+                    vegetableDayCount()
+                ) >= 100
+    },
+
+    {
+        id: "lunch-100",
+        tier: "legendary",
+        icon: "🐉",
+        name: "Dungeon Master of Lunch",
+        description:
+            "Complete 100 Planned Healthy Lunch quests.",
+        secret: false,
+        unlocked:
+            () =>
+                plannedLunchCount() >= 100
+    },
+
+    {
+        id: "hydration-100",
+        tier: "legendary",
+        icon: "🐉",
+        name: "Hydration Is Just a Passive Ability Now",
+        description:
+            "Hit hydration target 100 times.",
+        secret: false,
+        unlocked:
+            () =>
+                hydrationDayCount() >= 100
+    },
+
+    {
+        id: "perfect-100",
+        tier: "legendary",
+        icon: "🐉",
+        name: "One Hundred Perfect Days",
+        description:
+            "Accumulate 100 Perfect Days.",
+        secret: false,
+        unlocked:
+            () =>
+                perfectDayCount() >= 100
+    },
+
+    {
+        id: "level-25",
+        tier: "legendary",
+        icon: "🐉",
+        name: "Level 25 Adventurer",
+        description:
+            "Reach Level 25.",
+        secret: false,
+        unlocked:
+            () =>
+                playerLevel() >= 25
+    },
+
+    {
+        id: "activity-180",
+        tier: "legendary",
+        icon: "🐉",
+        name: "The Long Campaign",
+        description:
+            "Record Activity on 180 distinct days.",
+        secret: false,
+        unlocked:
+            () =>
+                activityDayCount() >= 180
+    },
+
+    {
+        id: "boss-220",
+        tier: "legendary",
+        icon: "🐉",
+        name: "Final Boss",
+        description:
+            "Reach 220 lb.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                220
+    },
+
+    {
+        id: "roll-credits",
+        tier: "legendary",
+        icon: "🐉",
+        name: "Roll Credits",
+        description:
+            "Reach goal territory and defeat every weight boss.",
+        secret: false,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <=
+                220
+    },
+
+
+    /* SECRET ACHIEVEMENTS */
+
+    {
+        id: "secret-overachiever",
+        tier: "secret",
+        icon: "❓",
+        name: "Overachiever",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                Object.values(history)
+                .some(
+                    record =>
+                        Number(
+                            record.water || 0
+                        ) >= 100
+                )
+    },
+
+    {
+        id: "secret-natural-20",
+        tier: "secret",
+        icon: "❓",
+        name: "Natural 20",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                perfectDayCount() >= 20
+    },
+
+    {
+        id: "secret-activity-250",
+        tier: "secret",
+        icon: "❓",
+        name: "Touch Grass: Legendary Edition",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                activityDayCount() >= 250
+    },
+
+    {
+        id: "secret-streak-100",
+        tier: "secret",
+        icon: "❓",
+        name: "What Do We Say to the God of Death?",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 100
+    }
+
+];
+
+function evaluateAchievements() {
+
+    const unlocked =
+        getUnlockedAchievements();
+
+    const newlyUnlocked = [];
+
+
+    ACHIEVEMENTS.forEach(
+        achievement => {
+
+            if (
+                unlocked[
+                    achievement.id
+                ]
+            ) {
+
+                return;
+            }
+
+
+            if (
+                achievement.unlocked()
+            ) {
+
+                unlocked[
+                    achievement.id
+                ] = {
+                    unlockedAt:
+                        new Date()
+                        .toISOString()
+                };
+
+
+                newlyUnlocked.push(
+                    achievement
+                );
+            }
+        }
+    );
+
+
+    if (
+        newlyUnlocked.length > 0
+    ) {
+
+        saveUnlockedAchievements(
+            unlocked
+        );
+
+
+        newlyUnlocked.forEach(
+            achievement => {
+
+                toast(
+                    `🏆 ${achievement.name}`
+                );
+            }
+        );
+    }
+
+
+    return unlocked;
 }
 
 
@@ -2033,6 +3323,262 @@ function renderCampaign() {
 
 
 /* ============================
+   ACHIEVEMENT UI
+============================ */
+
+function renderAchievements() {
+
+    const unlocked =
+        evaluateAchievements();
+
+    const unlockedIds =
+        Object.keys(
+            unlocked
+        );
+
+
+    document
+    .getElementById(
+        "achievementCount"
+    )
+    .textContent =
+        `${unlockedIds.length} / ${ACHIEVEMENTS.length}`;
+
+
+    const percent =
+        Math.round(
+            (
+                unlockedIds.length /
+                ACHIEVEMENTS.length
+            ) * 100
+        );
+
+
+    document
+    .getElementById(
+        "achievementPercent"
+    )
+    .textContent =
+        `${percent}%`;
+
+
+    document
+    .getElementById(
+        "achievementBar"
+    )
+    .style.width =
+        `${percent}%`;
+
+
+    const list =
+        document.getElementById(
+            "achievementList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    ACHIEVEMENTS.forEach(
+        achievement => {
+
+            const isUnlocked =
+                !!unlocked[
+                    achievement.id
+                ];
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "achievement-item" +
+                (
+                    isUnlocked
+                    ? ""
+                    : " achievement-locked"
+                );
+
+
+            let name =
+                achievement.name;
+
+            let description =
+                achievement.description;
+
+            let icon =
+                achievement.icon;
+
+
+            if (
+                achievement.secret &&
+                !isUnlocked
+            ) {
+
+                name =
+                    "Secret Achievement";
+
+                description =
+                    "Requirement unknown.";
+
+                icon =
+                    "❓";
+            }
+
+
+            let dateText = "";
+
+
+            if (isUnlocked) {
+
+                const unlockedAt =
+                    unlocked[
+                        achievement.id
+                    ].unlockedAt;
+
+
+                if (unlockedAt) {
+
+                    const date =
+                        new Date(
+                            unlockedAt
+                        );
+
+
+                    dateText = `
+                        <div class="achievement-date">
+                            Unlocked
+                            ${date.toLocaleDateString()}
+                        </div>
+                    `;
+                }
+            }
+
+
+            row.innerHTML = `
+                <div class="achievement-top">
+
+                    <div class="achievement-icon">
+                        ${isUnlocked
+                            ? icon
+                            : "🔒"}
+                    </div>
+
+                    <div class="achievement-info">
+
+                        <div class="achievement-name">
+                            ${name}
+                        </div>
+
+                        <div class="achievement-description">
+                            ${description}
+                        </div>
+
+                        ${dateText}
+
+                    </div>
+
+                </div>
+            `;
+
+
+            list.appendChild(
+                row
+            );
+        }
+    );
+
+
+    renderRecentAchievement(
+        unlocked
+    );
+}
+
+
+function renderRecentAchievement(
+    unlocked
+) {
+
+    const container =
+        document.getElementById(
+            "recentAchievement"
+        );
+
+
+    const entries =
+        Object.entries(
+            unlocked
+        )
+        .filter(
+            ([id, data]) =>
+                data.unlockedAt
+        )
+        .sort(
+            ([, a], [, b]) =>
+                b.unlockedAt
+                .localeCompare(
+                    a.unlockedAt
+                )
+        );
+
+
+    if (
+        entries.length === 0
+    ) {
+
+        container.innerHTML =
+            `<p class="small muted">
+                No achievements unlocked yet.
+            </p>`;
+
+        return;
+    }
+
+
+    const [
+        id,
+        data
+    ] =
+        entries[0];
+
+
+    const achievement =
+        ACHIEVEMENTS.find(
+            item =>
+                item.id === id
+        );
+
+
+    if (!achievement) {
+        return;
+    }
+
+
+    container.innerHTML = `
+        <div class="recent-unlock">
+
+            <div class="small muted">
+                RECENTLY UNLOCKED
+            </div>
+
+            <strong>
+                ${achievement.icon}
+                ${achievement.name}
+            </strong>
+
+            <div class="small muted">
+                ${achievement.description}
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* ============================
    MAIN UPDATE
 ============================ */
 
@@ -2153,8 +3699,10 @@ function updateUI() {
     updateBossUI();
 
     renderHistory();
-
+    
     renderCampaign();
+    
+    renderAchievements();
 }
 
 
@@ -2190,7 +3738,43 @@ const titles = {
         "Campaign"
 };
 
+document
+.getElementById(
+    "toggleAchievements"
+)
+.addEventListener(
+    "click",
+    () => {
 
+        const list =
+            document.getElementById(
+                "achievementList"
+            );
+
+
+        const isHidden =
+            list.classList
+            .contains(
+                "hidden"
+            );
+
+
+        list.classList.toggle(
+            "hidden"
+        );
+
+
+        document
+        .getElementById(
+            "toggleAchievements"
+        )
+        .textContent =
+            isHidden
+            ? "Hide Achievement Codex"
+            : "View Achievement Codex";
+    }
+);
+  
 document
 .querySelectorAll(
     ".nav-btn"
