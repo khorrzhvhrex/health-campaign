@@ -782,6 +782,89 @@ button {
     padding: 11px;
 }
 
+.raid-readiness {
+    background: var(--panel2);
+    border-radius: 11px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.raid-readiness-title {
+    font-weight: 800;
+}
+
+.raid-readiness-big {
+    font-size: 1.35rem;
+    font-weight: 850;
+    margin-top: 3px;
+}
+
+.raid-readiness-meta {
+    color: var(--muted);
+    font-size: .8rem;
+    margin-top: 4px;
+}
+
+.raid-resolution {
+    margin-top: 15px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+}
+
+.raid-resolution-title {
+    font-weight: 850;
+    margin-bottom: 10px;
+}
+
+.raid-resolution-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 9px;
+    margin-bottom: 12px;
+}
+
+.raid-resolution-stat {
+    background: var(--panel2);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.raid-resolution-stat strong {
+    display: block;
+    font-size: 1.2rem;
+}
+
+.raid-resolution-stat span {
+    color: var(--muted);
+    font-size: .75rem;
+}
+
+.raid-outcome {
+    border-radius: 11px;
+    padding: 11px;
+    margin-bottom: 8px;
+    background: var(--panel2);
+}
+
+.raid-outcome strong {
+    display: block;
+}
+
+.raid-outcome-note {
+    color: var(--muted);
+    font-size: .78rem;
+    margin-top: 3px;
+}
+
+.raid-victory {
+    background: var(--green-soft);
+    border: 1px solid rgba(34,197,94,.4);
+    border-radius: 11px;
+    padding: 12px;
+    font-weight: 800;
+    color: #bbf7d0;
+}
+
 .raid-comparison {
     margin-top: 15px;
 }
