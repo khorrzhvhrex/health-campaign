@@ -2252,6 +2252,292 @@ function toast(message) {
 
 
 /* ============================
+   EXPORT / IMPORT
+============================ */
+
+function exportCampaign() {
+
+    const backup = {
+        app: "health-campaign",
+        version: 1,
+        exportedAt:
+            new Date().toISOString(),
+
+        data: {
+            currentWeight:
+                currentWeight,
+
+            history:
+                history
+        }
+    };
+
+    const json =
+        JSON.stringify(
+            backup,
+            null,
+            2
+        );
+
+    const blob =
+        new Blob(
+            [json],
+            {
+                type:
+                    "application/json"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+    const filenameDate =
+        localDateKey();
+
+    link.href = url;
+
+    link.download =
+        `health-campaign-${filenameDate}.json`;
+
+    document.body
+        .appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(
+        url
+    );
+
+    toast(
+        "💾 Campaign exported"
+    );
+}
+
+
+document
+.getElementById(
+    "exportData"
+)
+.addEventListener(
+    "click",
+    exportCampaign
+);
+
+function showImportPreview(
+    backup
+) {
+
+    const container =
+        document.getElementById(
+            "importPreview"
+        );
+
+    const records =
+        Object.keys(
+            backup.data.history
+        ).length;
+
+    const weight =
+        Number(
+            backup.data
+                .currentWeight
+        );
+
+    const exportDate =
+        new Date(
+            backup.exportedAt
+        );
+
+    const prettyDate =
+        Number.isNaN(
+            exportDate.getTime()
+        )
+        ? "Unknown"
+        : exportDate
+            .toLocaleString();
+
+
+    container.innerHTML = `
+        <strong>
+            Import Campaign?
+        </strong>
+
+        <p class="small muted">
+            Current weight:
+            ${weight.toFixed(1)} lb
+            <br>
+
+            Daily records:
+            ${records}
+            <br>
+
+            Exported:
+            ${prettyDate}
+        </p>
+
+        <p class="small">
+            Importing will replace
+            the campaign data stored
+            on this device.
+        </p>
+
+        <div class="import-actions">
+
+            <button
+                class="import-confirm"
+                id="confirmImport"
+            >
+                Import
+            </button>
+
+            <button
+                class="import-cancel"
+                id="cancelImport"
+            >
+                Cancel
+            </button>
+
+        </div>
+    `;
+
+    container
+        .classList
+        .remove(
+            "hidden"
+        );
+
+
+    document
+    .getElementById(
+        "confirmImport"
+    )
+    .addEventListener(
+        "click",
+        confirmImport
+    );
+
+
+    document
+    .getElementById(
+        "cancelImport"
+    )
+    .addEventListener(
+        "click",
+        cancelImport
+    );
+}
+
+function confirmImport() {
+
+    if (!pendingImport)
+        return;
+
+
+    history =
+        pendingImport
+            .data
+            .history;
+
+
+    currentWeight =
+        Number(
+            pendingImport
+                .data
+                .currentWeight
+        );
+
+
+    localStorage.setItem(
+        "health-history",
+        JSON.stringify(
+            history
+        )
+    );
+
+
+    localStorage.setItem(
+        "health-weight",
+        String(
+            currentWeight
+        )
+    );
+
+
+    /*
+      Make sure today's record
+      exists after import.
+    */
+
+    if (!history[TODAY]) {
+
+        history[TODAY] = {
+            quests: [
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            water: 0
+        };
+    }
+
+
+    todayRecord =
+        history[TODAY];
+
+
+    saveHistory();
+
+    pendingImport =
+        null;
+
+
+    document
+    .getElementById(
+        "importPreview"
+    )
+    .classList
+    .add(
+        "hidden"
+    );
+
+
+    updateUI();
+
+
+    toast(
+        "✅ Campaign imported"
+    );
+}
+
+
+function cancelImport() {
+
+    pendingImport =
+        null;
+
+    document
+    .getElementById(
+        "importPreview"
+    )
+    .classList
+    .add(
+        "hidden"
+    );
+}
+
+
+/* ============================
    INITIALIZE
 ============================ */
 
