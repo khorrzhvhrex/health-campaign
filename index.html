@@ -483,25 +483,104 @@
         </section>
 
 
-        <section class="card raid">
+        <section class="card bloodwork-raid">
 
-            <div class="raid-icon">
-                🧪
+            <div class="raid-heading">
+        
+                <div>
+                    <div class="raid-icon">
+                        🧪
+                    </div>
+                </div>
+        
+                <div class="raid-heading-text">
+        
+                    <div class="raid-title">
+                        Six-Month Bloodwork Raid
+                    </div>
+        
+                    <div class="small muted">
+                        Baseline established Aug 18, 2026
+                    </div>
+        
+                </div>
+        
             </div>
-
-            <div class="raid-title">
-                Six-Month Bloodwork Raid
+        
+        
+            <div
+                class="bloodwork-table"
+                id="baselineBloodwork"
+            ></div>
+        
+        
+            <button
+                class="raid-btn"
+                id="toggleRaidEntry"
+                type="button"
+            >
+                ⚔️ Enter Raid Results
+            </button>
+        
+        
+            <div
+                id="raidEntryPanel"
+                class="raid-entry-panel hidden"
+            >
+        
+                <div class="raid-form-title">
+                    Follow-Up Bloodwork
+                </div>
+        
+        
+                <label
+                    class="raid-label"
+                    for="raidTestDate"
+                >
+                    Test Date
+                </label>
+        
+                <input
+                    id="raidTestDate"
+                    class="raid-input"
+                    type="date"
+                >
+        
+        
+                <div
+                    id="raidResultFields"
+                    class="raid-result-fields"
+                ></div>
+        
+        
+                <div class="raid-form-actions">
+        
+                    <button
+                        class="raid-save-btn"
+                        id="saveRaidResults"
+                        type="button"
+                    >
+                        Save Raid Results
+                    </button>
+        
+                    <button
+                        class="raid-cancel-btn"
+                        id="cancelRaidEntry"
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+        
+                </div>
+        
             </div>
-
-            <p class="small muted">
-                Main objective:
-                arrive lighter,
-                eating better,
-                moving more,
-                and see what happened to
-                fasting glucose and A1C.
-            </p>
-
+        
+        
+            <div
+                id="raidComparison"
+                class="raid-comparison hidden"
+            ></div>
+        
         </section>
 
         <section class="card">
