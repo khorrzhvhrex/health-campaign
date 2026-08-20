@@ -6,6 +6,9 @@ const START_WEIGHT = 276;
 
 const HYDRATION_TARGET = 64;
 
+const BLOODWORK_RAID_TARGET_DATE =
+    "2027-02-18";
+
 
 /* ============================
    BLOODWORK BASELINE
