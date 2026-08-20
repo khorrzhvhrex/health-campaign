@@ -735,6 +735,19 @@ const ACHIEVEMENTS = [
     },
 
     {
+        id: "bloodwork-raid-complete",
+        tier: "legendary",
+        icon: "🧪",
+        name: "The Bloodwork Raid",
+        description:
+            "Complete the six-month follow-up bloodwork encounter.",
+        secret: false,
+        unlocked:
+            () =>
+                !!getRaidResults()
+    },
+
+    {
         id: "boss-220",
         tier: "legendary",
         icon: "🐉",
