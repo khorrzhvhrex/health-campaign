@@ -1786,6 +1786,335 @@ function maxHistoricalStreak() {
     return best;
 }
 
+function countDaysMatching(
+    predicate
+) {
+
+    return Object.values(history)
+        .filter(
+            record =>
+                predicate(record)
+        )
+        .length;
+}
+
+
+function questComboCount(
+    questIds
+) {
+
+    const indexes =
+        questIds
+        .map(
+            id =>
+                QUESTS.findIndex(
+                    quest =>
+                        quest.id === id
+                )
+        );
+
+
+    return countDaysMatching(
+        record => {
+
+            if (
+                !Array.isArray(
+                    record.quests
+                )
+            ) {
+                return false;
+            }
+
+
+            return indexes.every(
+                index =>
+                    index >= 0 &&
+                    record.quests[index] ===
+                        true
+            );
+        }
+    );
+}
+
+
+function countExactWaterDays(
+    ounces
+) {
+
+    return countDaysMatching(
+        record =>
+            Number(
+                record.water || 0
+            ) === ounces
+    );
+}
+
+
+function longestPerfectDayStreak() {
+
+    const dates =
+        Object.keys(history)
+        .sort();
+
+
+    let best = 0;
+    let current = 0;
+    let previousDate = null;
+
+
+    dates.forEach(
+        date => {
+
+            const record =
+                history[date];
+
+
+            if (
+                recordXP(record) !== 100
+            ) {
+
+                current = 0;
+                previousDate = null;
+                return;
+            }
+
+
+            const thisDate =
+                new Date(
+                    date +
+                    "T12:00:00"
+                );
+
+
+            if (!previousDate) {
+
+                current = 1;
+            }
+
+            else {
+
+                const diff =
+                    Math.round(
+                        (
+                            thisDate -
+                            previousDate
+                        ) /
+                        86400000
+                    );
+
+
+                current =
+                    diff === 1
+                    ? current + 1
+                    : 1;
+            }
+
+
+            best =
+                Math.max(
+                    best,
+                    current
+                );
+
+
+            previousDate =
+                thisDate;
+        }
+    );
+
+
+    return best;
+}
+
+
+function largestHistoryGapBeforeActivity() {
+
+    const activeDates =
+        Object.entries(history)
+        .filter(
+            ([, record]) =>
+                recordXP(record) > 0
+        )
+        .map(
+            ([date]) => date
+        )
+        .sort();
+
+
+    let largestGap = 0;
+
+
+    for (
+        let i = 1;
+        i < activeDates.length;
+        i++
+    ) {
+
+        const previous =
+            new Date(
+                activeDates[i - 1] +
+                "T12:00:00"
+            );
+
+        const current =
+            new Date(
+                activeDates[i] +
+                "T12:00:00"
+            );
+
+
+        const gap =
+            Math.round(
+                (
+                    current -
+                    previous
+                ) /
+                86400000
+            ) - 1;
+
+
+        largestGap =
+            Math.max(
+                largestGap,
+                gap
+            );
+    }
+
+
+    return largestGap;
+}
+
+
+function hasPerfectReturnAfterGap(
+    minimumGapDays
+) {
+
+    const dates =
+        Object.keys(history)
+        .sort();
+
+
+    let previousActiveDate =
+        null;
+
+
+    for (
+        const date of dates
+    ) {
+
+        const record =
+            history[date];
+
+        const xp =
+            recordXP(record);
+
+
+        if (xp === 0) {
+            continue;
+        }
+
+
+        const currentDate =
+            new Date(
+                date +
+                "T12:00:00"
+            );
+
+
+        if (
+            previousActiveDate
+        ) {
+
+            const gap =
+                Math.round(
+                    (
+                        currentDate -
+                        previousActiveDate
+                    ) /
+                    86400000
+                ) - 1;
+
+
+            if (
+                gap >= minimumGapDays &&
+                xp === 100
+            ) {
+
+                return true;
+            }
+        }
+
+
+        previousActiveDate =
+            currentDate;
+    }
+
+
+    return false;
+}
+
+
+function hasPerfectDayAtNewLow() {
+
+    const entries =
+        allHistoryEntries();
+
+
+    let lowestSoFar =
+        START_WEIGHT;
+
+
+    for (
+        const [, record] of entries
+    ) {
+
+        if (
+            record.weight ===
+                undefined
+        ) {
+            continue;
+        }
+
+
+        const weight =
+            Number(
+                record.weight
+            );
+
+
+        if (
+            !Number.isFinite(
+                weight
+            )
+        ) {
+            continue;
+        }
+
+
+        const isNewLow =
+            weight < lowestSoFar;
+
+
+        if (
+            isNewLow &&
+            recordXP(record) === 100
+        ) {
+
+            return true;
+        }
+
+
+        lowestSoFar =
+            Math.min(
+                lowestSoFar,
+                weight
+            );
+    }
+
+
+    return false;
+}
+
 
 /* ============================
    STREAK
