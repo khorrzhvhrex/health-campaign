@@ -179,6 +179,55 @@ button {
     margin-bottom: 14px;
 }
 
+.backup-buttons {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 9px;
+    margin-top: 13px;
+}
+
+.backup-btn {
+    background: var(--panel3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 11px;
+    padding: 12px 8px;
+    font-weight: 700;
+}
+
+.import-preview {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--panel2);
+}
+
+.import-actions {
+    display: flex;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.import-confirm {
+    flex: 1;
+    background: var(--green);
+    color: #062a13;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: 800;
+}
+
+.import-cancel {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+}
+
 .section-title {
     margin: 0 0 13px;
     font-size: 1rem;
@@ -943,6 +992,49 @@ button {
                 fasting glucose and A1C.
             </p>
 
+        </section>
+
+        <section class="card">
+
+            <h2 class="section-title">
+                💾 Data & Backup
+            </h2>
+        
+            <p class="small muted">
+                Export your campaign before changing devices
+                or making major app changes.
+            </p>
+        
+            <div class="backup-buttons">
+        
+                <button
+                    class="backup-btn"
+                    id="exportData"
+                >
+                    Export Campaign
+                </button>
+        
+                <button
+                    class="backup-btn"
+                    id="importData"
+                >
+                    Import Campaign
+                </button>
+        
+            </div>
+        
+            <input
+                type="file"
+                id="importFile"
+                accept=".json,application/json"
+                class="hidden"
+            >
+        
+            <div
+                id="importPreview"
+                class="import-preview hidden"
+            ></div>
+        
         </section>
 
     </main>
