@@ -2634,11 +2634,11 @@ function updateUI() {
 
     updateBossUI();
 
-    renderHistory();
-    
-    renderCampaign();
-    
     renderAchievements();
+   
+    renderHistory();
+   
+    renderCampaign();
 }
 
 
