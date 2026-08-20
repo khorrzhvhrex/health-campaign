@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Campaign</title>
+
+<style>
+    :root {
+        --bg: #111827;
+        --panel: #1f2937;
+        --panel2: #273449;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --accent: #22c55e;
+        --border: #374151;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .app {
+        max-width: 600px;
+        margin: auto;
+        padding: 18px;
+    }
+
+    h1 {
+        margin-bottom: 4px;
+    }
+
+    .subtitle {
+        color: var(--muted);
+        margin-bottom: 22px;
+    }
+
+    .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .stat {
+        background: var(--panel2);
+        border-radius: 10px;
+        padding: 12px 8px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .stat-label {
+        color: var(--muted);
+        font-size: .8rem;
+    }
+
+    .quest {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .quest:last-child {
+        border-bottom: none;
+    }
+
+    .quest input {
+        width: 24px;
+        height: 24px;
+    }
+
+    .quest-name {
+        flex: 1;
+    }
+
+    .xp {
+        color: var(--accent);
+        font-weight: bold;
+    }
+
+    .progress {
+        height: 14px;
+        background: #374151;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width .25s;
+    }
+
+    label {
+        display: block;
+        color: var(--muted);
+        margin-bottom: 5px;
+    }
+
+    input[type="number"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--panel2);
+        color: white;
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+
+    button {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 9px;
+        background: var(--accent);
+        color: #06220f;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .boss {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .small {
+        color: var(--muted);
+        font-size: .9rem;
+    }
+
+    .complete {
+        opacity: .55;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <h1>⚔️ Health Campaign</h1>
+    <div class="subtitle" id="today"></div>
+
+    <div class="card stats">
+        <div class="stat">
+            <div class="stat-value" id="dailyXP">0</div>
+            <div class="stat-label">XP Today</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-value" id="streak">0</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-value" id="currentWeight">276</div>
+            <div class="stat-label">Weight</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Today's Quests</h2>
+
+        <div class="quest">
+            <input type="checkbox" data-xp="30">
+            <span class="quest-name">🥗 Planned healthy lunch</span>
+            <span class="xp">+30</span>
+        </div>
+
+        <div class="quest">
+            <input type="checkbox" data-xp="20">
+            <span class="quest-name">🚫 No junk/snack run</span>
+            <span class="xp">+20</span>
+        </div>
+
+        <div class="quest">
+            <input type="checkbox" data-xp="20">
+            <span class="quest-name">🚶 20+ minutes activity</span>
+            <span class="xp">+20</span>
+        </div>
+
+        <div class="quest">
+            <input type="checkbox" data-xp="20" id="hydrationQuest">
+            <span class="quest-name">💧 Hit 64 oz hydration</span>
+            <span class="xp">+20</span>
+        </div>
+
+        <div class="quest">
+            <input type="checkbox" data-xp="10">
+            <span class="quest-name">🥦 Vegetables with 2+ meals</span>
+            <span class="xp">+10</span>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="xpBar"></div>
+        </div>
+
+        <p class="small" id="xpText">0 / 100 XP</p>
+    </div>
+
+    <div class="card">
+        <h2>💧 Hydration</h2>
+
+        <label for="water">Ounces today</label>
+        <input id="water" type="number" min="0" step="8">
+
+        <div class="progress">
+            <div class="progress-bar" id="waterBar"></div>
+        </div>
+
+        <p class="small" id="waterText">0 / 64 oz</p>
+    </div>
+
+    <div class="card">
+        <h2>⚖️ Weight Check</h2>
+
+        <label for="weight">Today's weight</label>
+        <input id="weight" type="number" min="150" max="400" step=".1">
+
+        <button id="saveWeight">Log Weight</button>
+    </div>
+
+    <div class="card">
+        <h2>👹 Current Boss</h2>
+
+        <div class="boss" id="bossName">Break the 270 Barrier</div>
+        <p id="bossProgress">276 → 269 lb</p>
+
+        <div class="progress">
+            <div class="progress-bar" id="bossBar"></div>
+        </div>
+
+        <p class="small">
+            Next bosses: 259 • 249 • 239 • 229 • 220
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>🧪 Final Raid</h2>
+        <strong>Six-Month Bloodwork Raid</strong>
+
+        <p class="small">
+            Objective: arrive lighter, stronger, eating better,
+            and see what happened to fasting glucose and A1C.
+        </p>
+    </div>
+
+</div>
+
+<script>
+
+const DAY_KEY = new Date().toISOString().slice(0,10);
+
+const defaultDay = {
+    quests: [false,false,false,false,false],
+    water: 0
+};
+
+let day =
+    JSON.parse(localStorage.getItem("health-" + DAY_KEY))
+    || defaultDay;
+
+let history =
+    JSON.parse(localStorage.getItem("health-history"))
+    || {};
+
+let weight =
+    Number(localStorage.getItem("health-weight"))
+    || 276;
+
+document.getElementById("today").textContent =
+    new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric"
+    });
+
+const checkboxes =
+    [...document.querySelectorAll('.quest input[type="checkbox"]')];
+
+checkboxes.forEach((cb, index) => {
+
+    cb.checked = day.quests[index];
+
+    cb.addEventListener("change", () => {
+
+        day.quests[index] = cb.checked;
+
+        saveDay();
+        update();
+
+    });
+
+});
+
+const waterInput =
+    document.getElementById("water");
+
+waterInput.value = day.water;
+
+waterInput.addEventListener("input", () => {
+
+    day.water = Number(waterInput.value || 0);
+
+    if(day.water >= 64) {
+
+        const hydrationIndex =
+            checkboxes.indexOf(
+                document.getElementById("hydrationQuest")
+            );
+
+        day.quests[hydrationIndex] = true;
+        document.getElementById("hydrationQuest").checked = true;
+
+    }
+
+    saveDay();
+    update();
+
+});
+
+document.getElementById("saveWeight")
+.addEventListener("click", () => {
+
+    const value =
+        Number(document.getElementById("weight").value);
+
+    if(!value) return;
+
+    weight = value;
+
+    localStorage.setItem(
+        "health-weight",
+        String(weight)
+    );
+
+    history[DAY_KEY] =
+        history[DAY_KEY] || {};
+
+    history[DAY_KEY].weight = weight;
+
+    localStorage.setItem(
+        "health-history",
+        JSON.stringify(history)
+    );
+
+    update();
+
+});
+
+function saveDay() {
+
+    localStorage.setItem(
+        "health-" + DAY_KEY,
+        JSON.stringify(day)
+    );
+
+    history[DAY_KEY] =
+        history[DAY_KEY] || {};
+
+    history[DAY_KEY].quests =
+        [...day.quests];
+
+    history[DAY_KEY].water =
+        day.water;
+
+    localStorage.setItem(
+        "health-history",
+        JSON.stringify(history)
+    );
+
+}
+
+function getXP() {
+
+    return checkboxes.reduce(
+        (sum, cb) =>
+            sum + (cb.checked ? Number(cb.dataset.xp) : 0),
+        0
+    );
+
+}
+
+function calculateStreak() {
+
+    let streak = 0;
+
+    let date = new Date();
+
+    for(let i = 0; i < 365; i++) {
+
+        const key =
+            date.toISOString().slice(0,10);
+
+        const record = history[key];
+
+        if(!record || !record.quests)
+            break;
+
+        const completed =
+            record.quests.filter(Boolean).length;
+
+        if(completed === 0)
+            break;
+
+        streak++;
+
+        date.setDate(date.getDate() - 1);
+
+    }
+
+    return streak;
+
+}
+
+function updateBoss() {
+
+    const bosses = [
+        { target:269, name:"Break the 270 Barrier" },
+        { target:259, name:"The 260 Gate" },
+        { target:249, name:"Farewell, 250s" },
+        { target:239, name:"Into the 230s" },
+        { target:229, name:"Approach Goal Territory" },
+        { target:220, name:"Final Boss" }
+    ];
+
+    let boss =
+        bosses.find(b => weight > b.target)
+        || bosses[bosses.length - 1];
+
+    const previous =
+        boss.target === 269
+        ? 276
+        : boss.target + 10;
+
+    const total =
+        previous - boss.target;
+
+    const lost =
+        previous - weight;
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(100, (lost / total) * 100)
+        );
+
+    document.getElementById("bossName").textContent =
+        boss.name;
+
+    document.getElementById("bossProgress").textContent =
+        `${weight.toFixed(1)} → ${boss.target} lb`;
+
+    document.getElementById("bossBar").style.width =
+        progress + "%";
+
+}
+
+function update() {
+
+    const xp = getXP();
+
+    document.getElementById("dailyXP").textContent =
+        xp;
+
+    document.getElementById("xpText").textContent =
+        `${xp} / 100 XP`;
+
+    document.getElementById("xpBar").style.width =
+        xp + "%";
+
+    document.getElementById("currentWeight").textContent =
+        weight.toFixed(1);
+
+    document.getElementById("streak").textContent =
+        calculateStreak();
+
+    const waterPercent =
+        Math.min(
+            100,
+            (day.water / 64) * 100
+        );
+
+    document.getElementById("waterBar").style.width =
+        waterPercent + "%";
+
+    document.getElementById("waterText").textContent =
+        `${day.water} / 64 oz`;
+
+    checkboxes.forEach(cb => {
+
+        cb.closest(".quest")
+        .classList.toggle(
+            "complete",
+            cb.checked
+        );
+
+    });
+
+    updateBoss();
+
+}
+
+update();
+
+</script>
+
+</body>
+</html>
