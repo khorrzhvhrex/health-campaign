@@ -2016,13 +2016,48 @@ function bossEventsByDate() {
 }
 
 
+function bloodworkRaidEventsByDate() {
+
+    const events = {};
+
+    const saved =
+        getRaidResults();
+
+
+    if (
+        !saved ||
+        !saved.date
+    ) {
+
+        return events;
+    }
+
+
+    events[
+        saved.date
+    ] = [
+        {
+            type:
+                "boss",
+
+            text:
+                "🧪 SIX-MONTH BLOODWORK RAID COMPLETED"
+        }
+    ];
+
+
+    return events;
+}
+
+
 function combinedJournalEvents() {
 
     const maps = [
-        achievementEventsByDate(),
-        levelEventsByDate(),
-        bossEventsByDate()
-    ];
+       achievementEventsByDate(),
+       levelEventsByDate(),
+       bossEventsByDate(),
+       bloodworkRaidEventsByDate()
+   ];
 
 
     const combined = {};
@@ -2264,6 +2299,92 @@ function renderHistory() {
    BLOODWORK RAID
 ============================ */
 
+function daysUntilRaid() {
+
+    const today =
+        new Date(
+            TODAY +
+            "T12:00:00"
+        );
+
+    const target =
+        new Date(
+            BLOODWORK_RAID_TARGET_DATE +
+            "T12:00:00"
+        );
+
+    return Math.ceil(
+        (
+            target -
+            today
+        ) /
+        86400000
+    );
+}
+
+
+function renderRaidReadiness() {
+
+    const container =
+        document.getElementById(
+            "raidReadiness"
+        );
+
+    const saved =
+        getRaidResults();
+
+    if (saved) {
+
+        container.innerHTML = `
+            <div class="raid-readiness-title">
+                ⚔️ Raid Completed
+            </div>
+
+            <div class="raid-readiness-meta">
+                Follow-up bloodwork has been logged.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const days =
+        daysUntilRaid();
+
+
+    if (days > 0) {
+
+        container.innerHTML = `
+            <div class="raid-readiness-title">
+                Raid Countdown
+            </div>
+
+            <div class="raid-readiness-big">
+                ${days} days
+            </div>
+
+            <div class="raid-readiness-meta">
+                Target encounter date:
+                Feb 18, 2027
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = `
+        <div class="raid-readiness-title">
+            ⚔️ RAID READY
+        </div>
+
+        <div class="raid-readiness-meta">
+            The six-month follow-up window has arrived.
+        </div>
+    `;
+}
+
 function getRaidResults() {
 
     return JSON.parse(
@@ -2316,6 +2437,92 @@ function bloodworkStatus(
     return metric.normal(
         Number(value)
     );
+}
+
+function classifyRaidMetric(
+    metric,
+    newValue
+) {
+
+    const baseline =
+        metric.baseline;
+
+    const baselineInRange =
+        bloodworkStatus(
+            metric,
+            baseline
+        );
+
+    const newInRange =
+        bloodworkStatus(
+            metric,
+            newValue
+        );
+
+
+    if (
+        !baselineInRange &&
+        newInRange
+    ) {
+
+        return {
+            category:
+                "entered-range",
+
+            label:
+                "Entered Reference Range"
+        };
+    }
+
+
+    /*
+      HDL improves upward.
+      Everything else here improves downward.
+    */
+
+    const improved =
+        metric.id === "hdl"
+        ? newValue > baseline
+        : newValue < baseline;
+
+
+    const worsened =
+        metric.id === "hdl"
+        ? newValue < baseline
+        : newValue > baseline;
+
+
+    if (improved) {
+
+        return {
+            category:
+                "improved",
+
+            label:
+                "Improved"
+        };
+    }
+
+
+    if (worsened) {
+
+        return {
+            category:
+                "worsened",
+
+            label:
+                "Moved Away From Baseline"
+        };
+    }
+
+
+    return {
+        category:
+            "held",
+
+        label:
+            "Held the Line"
+    };
 }
 
 
@@ -2695,6 +2902,197 @@ function renderRaidComparison() {
 }
 
 
+function renderRaidResolution() {
+
+    const saved =
+        getRaidResults();
+
+    const container =
+        document.getElementById(
+            "raidResolution"
+        );
+
+
+    if (
+        !saved ||
+        !saved.results
+    ) {
+
+        container.classList
+            .add(
+                "hidden"
+            );
+
+        return;
+    }
+
+
+    let enteredRange = 0;
+    let improved = 0;
+    let held = 0;
+    let worsened = 0;
+
+    let rows = "";
+
+
+    BLOODWORK_BASELINE.metrics
+    .forEach(
+        metric => {
+
+            const newValue =
+                Number(
+                    saved.results[
+                        metric.id
+                    ]
+                );
+
+
+            if (
+                !Number.isFinite(
+                    newValue
+                )
+            ) {
+
+                return;
+            }
+
+
+            const outcome =
+                classifyRaidMetric(
+                    metric,
+                    newValue
+                );
+
+
+            if (
+                outcome.category ===
+                    "entered-range"
+            ) {
+                enteredRange++;
+            }
+
+            else if (
+                outcome.category ===
+                    "improved"
+            ) {
+                improved++;
+            }
+
+            else if (
+                outcome.category ===
+                    "held"
+            ) {
+                held++;
+            }
+
+            else if (
+                outcome.category ===
+                    "worsened"
+            ) {
+                worsened++;
+            }
+
+
+            rows += `
+                <div class="raid-outcome">
+
+                    <strong>
+                        ${metric.name}
+                    </strong>
+
+                    <div class="raid-outcome-note">
+                        ${outcome.label}
+                    </div>
+
+                </div>
+            `;
+        }
+    );
+
+
+    const positive =
+        enteredRange +
+        improved;
+
+
+    const resultBanner =
+        positive >= 5
+        ? `
+            <div class="raid-victory">
+                🏆 MAJOR RAID VICTORY
+            </div>
+        `
+        : positive >= 3
+        ? `
+            <div class="raid-victory">
+                ⚔️ RAID VICTORY
+            </div>
+        `
+        : `
+            <div class="raid-victory">
+                📜 RAID COMPLETE
+            </div>
+        `;
+
+
+    container.innerHTML = `
+        <div class="raid-resolution-title">
+            Raid Resolution
+        </div>
+
+        ${resultBanner}
+
+        <div class="raid-resolution-grid">
+
+            <div class="raid-resolution-stat">
+                <strong>
+                    ${enteredRange}
+                </strong>
+                <span>
+                    ENTERED RANGE
+                </span>
+            </div>
+
+            <div class="raid-resolution-stat">
+                <strong>
+                    ${improved}
+                </strong>
+                <span>
+                    IMPROVED
+                </span>
+            </div>
+
+            <div class="raid-resolution-stat">
+                <strong>
+                    ${held}
+                </strong>
+                <span>
+                    HELD
+                </span>
+            </div>
+
+            <div class="raid-resolution-stat">
+                <strong>
+                    ${worsened}
+                </strong>
+                <span>
+                    MOVED AWAY
+                </span>
+            </div>
+
+        </div>
+
+        ${rows}
+    `;
+
+
+    container.classList
+        .remove(
+            "hidden"
+        );
+}
+
+
 function openRaidEntry() {
 
     buildRaidResultFields();
@@ -2839,7 +3237,11 @@ function saveBloodworkRaid() {
 
     renderRaidComparison();
 
-
+    renderRaidReadiness();
+   
+    renderRaidResolution();
+   
+   
     toast(
         "⚔️ Bloodwork Raid saved"
     );
@@ -3356,7 +3758,11 @@ function updateUI() {
 
     renderBaselineBloodwork();
 
+    renderRaidReadiness();
+   
     renderRaidComparison();
+   
+    renderRaidResolution();
 }
 
 
