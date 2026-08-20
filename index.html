@@ -2943,7 +2943,20 @@ const ACHIEVEMENTS = [
                         ) >= 100
                 )
     },
-
+    
+    {
+        id: "secret-critical-hit",
+        tier: "secret",
+        icon: "❓",
+        name: "Critical Hit",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                hasPerfectDayAtNewLow()
+    },
+    
     {
         id: "secret-natural-20",
         tier: "secret",
@@ -2956,7 +2969,154 @@ const ACHIEVEMENTS = [
             () =>
                 perfectDayCount() >= 20
     },
-
+    
+    {
+        id: "secret-bell",
+        tier: "secret",
+        icon: "❓",
+        name: "I Didn't Hear No Bell",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                largestHistoryGapBeforeActivity() >= 7
+    },
+    
+    {
+        id: "secret-comeback",
+        tier: "secret",
+        icon: "❓",
+        name: "The Comeback Kid",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                hasPerfectReturnAfterGap(
+                    30
+                )
+    },
+    
+    {
+        id: "secret-inventory",
+        tier: "secret",
+        icon: "❓",
+        name: "Inventory Management",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                questComboCount(
+                    [
+                        "lunch",
+                        "junk",
+                        "vegetables"
+                    ]
+                ) >= 10
+    },
+    
+    {
+        id: "secret-side-quest",
+        tier: "secret",
+        icon: "❓",
+        name: "Side Quest Enjoyer",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                activityDayCount() >= 50
+    },
+    
+    {
+        id: "secret-potion",
+        tier: "secret",
+        icon: "❓",
+        name: "Potion Addiction, But Healthy",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                countExactWaterDays(
+                    64
+                ) >= 20
+    },
+    
+    {
+        id: "secret-minmax",
+        tier: "secret",
+        icon: "❓",
+        name: "Min-Maxed Constitution",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                questComboCount(
+                    [
+                        "activity",
+                        "hydration",
+                        "vegetables"
+                    ]
+                ) >= 25
+    },
+    
+    {
+        id: "secret-no-damage",
+        tier: "secret",
+        icon: "❓",
+        name: "No Damage Run",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                longestPerfectDayStreak() >= 7
+    },
+    
+    {
+        id: "secret-flawless",
+        tier: "secret",
+        icon: "❓",
+        name: "Flawless Victory",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                longestPerfectDayStreak() >= 14
+    },
+    
+    {
+        id: "secret-streak-100",
+        tier: "secret",
+        icon: "❓",
+        name: "What Do We Say to the God of Death?",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                maxHistoricalStreak() >= 100
+    },
+    
+    {
+        id: "secret-new-game-plus",
+        tier: "secret",
+        icon: "❓",
+        name: "New Game+",
+        description:
+            "Secret achievement unlocked.",
+        secret: true,
+        unlocked:
+            () =>
+                lowestRecordedWeight() <= 220 &&
+                perfectDayCount() >= 100
+    },
+    
     {
         id: "secret-activity-250",
         tier: "secret",
@@ -2969,18 +3129,20 @@ const ACHIEVEMENTS = [
             () =>
                 activityDayCount() >= 250
     },
-
+    
     {
-        id: "secret-streak-100",
+        id: "secret-achievement-problem",
         tier: "secret",
         icon: "❓",
-        name: "What Do We Say to the God of Death?",
+        name: "Achievement Unlocked: Achievement Problem",
         description:
             "Secret achievement unlocked.",
         secret: true,
         unlocked:
             () =>
-                maxHistoricalStreak() >= 100
+                Object.keys(
+                    getUnlockedAchievements()
+                ).length >= 50
     }
 
 ];
