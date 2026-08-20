@@ -6,6 +6,101 @@ const START_WEIGHT = 276;
 
 const HYDRATION_TARGET = 64;
 
+
+/* ============================
+   BLOODWORK BASELINE
+============================ */
+
+const BLOODWORK_BASELINE = {
+
+    date: "2026-08-18",
+
+    metrics: [
+
+        {
+            id: "glucose",
+            name: "Glucose (Fasting)",
+            unit: "mg/dL",
+            baseline: 120,
+            reference: "70–99 mg/dL",
+            normal:
+                value =>
+                    value >= 70 &&
+                    value <= 99
+        },
+
+        {
+            id: "cholesterol",
+            name: "Cholesterol",
+            unit: "mg/dL",
+            baseline: 209,
+            reference: "<200 mg/dL",
+            normal:
+                value =>
+                    value < 200
+        },
+
+        {
+            id: "triglycerides",
+            name: "Triglycerides",
+            unit: "mg/dL",
+            baseline: 131,
+            reference: "<150 mg/dL",
+            normal:
+                value =>
+                    value < 150
+        },
+
+        {
+            id: "hdl",
+            name: "HDL Cholesterol",
+            unit: "mg/dL",
+            baseline: 42,
+            reference:
+                ">40 mg/dL • ≥60 negative-risk value",
+            normal:
+                value =>
+                    value > 40
+        },
+
+        {
+            id: "ldl",
+            name: "LDL Cholesterol",
+            unit: "mg/dL",
+            baseline: 144,
+            reference: "<100 mg/dL",
+            normal:
+                value =>
+                    value < 100
+        },
+
+        {
+            id: "vldl",
+            name: "VLDL Cholesterol",
+            unit: "mg/dL",
+            baseline: 23,
+            reference: "<30 mg/dL",
+            normal:
+                value =>
+                    value < 30
+        },
+
+        {
+            id: "ratio",
+            name: "Cholesterol / HDL Ratio",
+            unit: "",
+            baseline: 5.0,
+            reference: "<4.5",
+            normal:
+                value =>
+                    value < 4.5
+        }
+
+    ]
+
+};
+
+
 const QUESTS = [
     {
         id: "lunch",
@@ -2163,6 +2258,592 @@ function renderHistory() {
 
 
 /* ============================
+   BLOODWORK RAID
+============================ */
+
+function getRaidResults() {
+
+    return JSON.parse(
+        localStorage.getItem(
+            "health-bloodwork-raid"
+        )
+    ) || null;
+}
+
+
+function saveRaidResultsData(
+    data
+) {
+
+    localStorage.setItem(
+        "health-bloodwork-raid",
+        JSON.stringify(data)
+    );
+}
+
+
+function formatBloodworkValue(
+    metric,
+    value
+) {
+
+    const numeric =
+        Number(value);
+
+
+    if (
+        metric.id === "ratio"
+    ) {
+
+        return numeric.toFixed(1);
+    }
+
+
+    return metric.unit
+       ? `${numeric} ${metric.unit}`
+       : String(numeric);
+}
+
+
+function bloodworkStatus(
+    metric,
+    value
+) {
+
+    return metric.normal(
+        Number(value)
+    );
+}
+
+
+function renderBaselineBloodwork() {
+
+    const container =
+        document.getElementById(
+            "baselineBloodwork"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    BLOODWORK_BASELINE.metrics
+    .forEach(
+        metric => {
+
+            const inRange =
+                bloodworkStatus(
+                    metric,
+                    metric.baseline
+                );
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "bloodwork-row";
+
+
+            row.innerHTML = `
+                <div class="bloodwork-row-top">
+
+                    <span class="bloodwork-name">
+                        ${metric.name}
+                    </span>
+
+                    <span class="bloodwork-value">
+                        ${formatBloodworkValue(
+                            metric,
+                            metric.baseline
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="bloodwork-reference">
+                    Reference:
+                    ${metric.reference}
+                </div>
+
+                <span
+                    class="bloodwork-status ${
+                        inRange
+                        ? "in-range"
+                        : "out-range"
+                    }"
+                >
+                    ${
+                        inRange
+                        ? "Within reference"
+                        : "Outside reference"
+                    }
+                </span>
+            `;
+
+
+            container
+            .appendChild(
+                row
+            );
+        }
+    );
+}
+
+
+function buildRaidResultFields() {
+
+    const container =
+        document.getElementById(
+            "raidResultFields"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    const saved =
+        getRaidResults();
+
+
+    BLOODWORK_BASELINE.metrics
+    .forEach(
+        metric => {
+
+            const field =
+                document.createElement(
+                    "div"
+                );
+
+
+            field.className =
+                "raid-result-field";
+
+
+            const savedValue =
+                saved &&
+                saved.results
+                ? saved.results[
+                    metric.id
+                  ]
+                : "";
+
+
+            field.innerHTML = `
+                <label
+                    for="raid-${metric.id}"
+                >
+                    ${metric.name}
+                </label>
+
+                <div class="small muted">
+                    Baseline:
+                    ${formatBloodworkValue(
+                        metric,
+                        metric.baseline
+                    )}
+                    •
+                    Reference:
+                    ${metric.reference}
+                </div>
+
+                <input
+                    id="raid-${metric.id}"
+                    data-raid-metric="${metric.id}"
+                    type="number"
+                    inputmode="decimal"
+                    step="0.1"
+                    value="${savedValue}"
+                >
+            `;
+
+
+            container
+            .appendChild(
+                field
+            );
+        }
+    );
+
+
+    if (
+        saved &&
+        saved.date
+    ) {
+
+        document
+        .getElementById(
+            "raidTestDate"
+        )
+        .value =
+            saved.date;
+    }
+}
+
+
+function renderRaidComparison() {
+
+    const saved =
+        getRaidResults();
+
+
+    const container =
+        document.getElementById(
+            "raidComparison"
+        );
+
+
+    if (
+        !saved ||
+        !saved.date ||
+        !saved.results
+    ) {
+
+        container
+        .classList
+        .add(
+            "hidden"
+        );
+
+        return;
+    }
+
+
+    const date =
+        new Date(
+            saved.date +
+            "T12:00:00"
+        );
+
+
+    const prettyDate =
+        date.toLocaleDateString(
+            undefined,
+            {
+                month:
+                    "long",
+
+                day:
+                    "numeric",
+
+                year:
+                    "numeric"
+            }
+        );
+
+
+    let rows = "";
+
+
+    BLOODWORK_BASELINE.metrics
+    .forEach(
+        metric => {
+
+            const newValue =
+                Number(
+                    saved.results[
+                        metric.id
+                    ]
+                );
+
+
+            if (
+                !Number.isFinite(
+                    newValue
+                )
+            ) {
+
+                return;
+            }
+
+
+            const delta =
+                newValue -
+                metric.baseline;
+
+
+            const deltaText =
+                delta === 0
+                ? "No change"
+                : `${
+                    delta > 0
+                    ? "+"
+                    : ""
+                  }${delta.toFixed(
+                      metric.id ===
+                          "ratio"
+                      ? 1
+                      : 0
+                  )}`;
+
+
+            const inRange =
+                bloodworkStatus(
+                    metric,
+                    newValue
+                );
+
+
+            rows += `
+                <div class="raid-comparison-row">
+
+                    <div class="bloodwork-name">
+                        ${metric.name}
+                    </div>
+
+                    <div class="raid-comparison-values">
+
+                        <div class="raid-old-value">
+                            ${formatBloodworkValue(
+                                metric,
+                                metric.baseline
+                            )}
+                        </div>
+
+                        <div class="raid-arrow">
+                            →
+                        </div>
+
+                        <div class="raid-new-value">
+                            ${formatBloodworkValue(
+                                metric,
+                                newValue
+                            )}
+                        </div>
+
+                    </div>
+
+                    <div class="raid-delta">
+                        Change:
+                        ${deltaText}
+                        ${
+                            metric.unit
+                            ? ` ${metric.unit}`
+                            : ""
+                        }
+                    </div>
+
+                    <span
+                        class="bloodwork-status ${
+                            inRange
+                            ? "in-range"
+                            : "out-range"
+                        }"
+                    >
+                        ${
+                            inRange
+                            ? "Within reference"
+                            : "Outside reference"
+                        }
+                    </span>
+
+                </div>
+            `;
+        }
+    );
+
+
+    container.innerHTML = `
+        <div class="raid-comparison-title">
+            ⚔️ Raid Results
+        </div>
+
+        <div class="raid-comparison-date">
+            Follow-up test:
+            ${prettyDate}
+        </div>
+
+        ${rows}
+
+        <div class="raid-result-actions">
+
+            <button
+                class="raid-edit-btn"
+                id="editRaidResults"
+                type="button"
+            >
+                Edit Raid Results
+            </button>
+
+        </div>
+    `;
+
+
+    container
+    .classList
+    .remove(
+        "hidden"
+    );
+
+
+    document
+    .getElementById(
+        "editRaidResults"
+    )
+    .addEventListener(
+        "click",
+        openRaidEntry
+    );
+}
+
+
+function openRaidEntry() {
+
+    buildRaidResultFields();
+
+
+    document
+    .getElementById(
+        "raidEntryPanel"
+    )
+    .classList
+    .remove(
+        "hidden"
+    );
+
+
+    document
+    .getElementById(
+        "toggleRaidEntry"
+    )
+    .classList
+    .add(
+        "hidden"
+    );
+}
+
+
+function closeRaidEntry() {
+
+    document
+    .getElementById(
+        "raidEntryPanel"
+    )
+    .classList
+    .add(
+        "hidden"
+    );
+
+
+    document
+    .getElementById(
+        "toggleRaidEntry"
+    )
+    .classList
+    .remove(
+        "hidden"
+    );
+}
+
+
+function saveBloodworkRaid() {
+
+    const date =
+        document
+        .getElementById(
+            "raidTestDate"
+        )
+        .value;
+
+
+    if (!date) {
+
+        toast(
+            "Select the bloodwork date"
+        );
+
+        return;
+    }
+
+
+    const results = {};
+
+
+    let valid = true;
+
+
+    BLOODWORK_BASELINE.metrics
+    .forEach(
+        metric => {
+
+            const input =
+                document
+                .getElementById(
+                    `raid-${metric.id}`
+                );
+
+
+            const value =
+                Number(
+                    input.value
+                );
+
+
+            if (
+                input.value === "" ||
+                !Number.isFinite(value) ||
+                value < 0
+            ) {
+
+                valid = false;
+                return;
+            }
+
+
+            results[
+                metric.id
+            ] = value;
+        }
+    );
+
+
+    if (!valid) {
+
+        toast(
+            "Enter every raid result"
+        );
+
+        return;
+    }
+
+
+    const data = {
+
+        date:
+            date,
+
+        results:
+            results,
+
+        savedAt:
+            new Date()
+            .toISOString()
+
+    };
+
+
+    saveRaidResultsData(
+        data
+    );
+
+
+    closeRaidEntry();
+
+    renderRaidComparison();
+
+
+    toast(
+        "⚔️ Bloodwork Raid saved"
+    );
+}
+
+
+/* ============================
    CAMPAIGN VIEW
 ============================ */
 
@@ -2514,6 +3195,36 @@ function renderRecentAchievement(
 }
 
 
+document
+.getElementById(
+    "toggleRaidEntry"
+)
+.addEventListener(
+    "click",
+    openRaidEntry
+);
+
+
+document
+.getElementById(
+    "cancelRaidEntry"
+)
+.addEventListener(
+    "click",
+    closeRaidEntry
+);
+
+
+document
+.getElementById(
+    "saveRaidResults"
+)
+.addEventListener(
+    "click",
+    saveBloodworkRaid
+);
+
+
 /* ============================
    MAIN UPDATE
 ============================ */
@@ -2639,6 +3350,10 @@ function updateUI() {
     renderHistory();
    
     renderCampaign();
+
+    renderBaselineBloodwork();
+
+    renderRaidComparison();
 }
 
 
@@ -2826,7 +3541,7 @@ function exportCampaign() {
         exportedAt:
             new Date().toISOString(),
 
-        data: {
+         data: {
              currentWeight:
                  currentWeight,
          
@@ -2834,7 +3549,10 @@ function exportCampaign() {
                  history,
          
              achievements:
-                 getUnlockedAchievements()
+                 getUnlockedAchievements(),
+         
+             bloodworkRaid:
+                 getRaidResults()
          }
     };
 
@@ -3397,24 +4115,57 @@ function confirmImport() {
    }
    
    else {
+
+      /*
+        Older v1 backups did not
+        include achievement data.
+        Clear existing unlocks so
+        they can be reconstructed
+        from imported history.
+      */
+   
+      localStorage.removeItem(
+          "health-achievements"
+      );
+   
+   }
+   
+   
+   /*
+     Restore Bloodwork Raid data
+     when included in the backup.
+   */
+   
+   if (
+       pendingImport.data
+           .bloodworkRaid
+   ) {
+   
+       localStorage.setItem(
+           "health-bloodwork-raid",
+           JSON.stringify(
+               pendingImport.data
+                   .bloodworkRaid
+           )
+       );
+   }
+   
+   else {
    
        /*
-         Older v1 backups did not
-         include achievement data.
-         Clear existing unlocks so
-         they can be reconstructed
-         from imported history.
+         Older backups did not
+         include Bloodwork Raid data.
        */
    
        localStorage.removeItem(
-           "health-achievements"
+           "health-bloodwork-raid"
        );
    }
    
    
    /*
-     Make sure today's record
-     exists after import.
+   Make sure today's record
+   exists after import.
    */
 
     if (!history[TODAY]) {
