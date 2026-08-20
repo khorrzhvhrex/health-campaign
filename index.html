@@ -2332,6 +2332,299 @@ document
     exportCampaign
 );
 
+
+/* ============================
+   IMPORT FILE HANDLING
+============================ */
+
+let pendingImport = null;
+
+
+document
+.getElementById(
+    "importData"
+)
+.addEventListener(
+    "click",
+    () => {
+
+        document
+        .getElementById(
+            "importFile"
+        )
+        .click();
+    }
+);
+
+
+document
+.getElementById(
+    "importFile"
+)
+.addEventListener(
+    "change",
+    handleImportFile
+);
+
+
+function handleImportFile(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        () => {
+
+            try {
+
+                const backup =
+                    JSON.parse(
+                        reader.result
+                    );
+
+                validateBackup(
+                    backup
+                );
+
+                pendingImport =
+                    backup;
+
+                showImportPreview(
+                    backup
+                );
+
+            }
+
+            catch (error) {
+
+                pendingImport =
+                    null;
+
+                toast(
+                    "❌ Invalid campaign backup"
+                );
+
+                console.error(
+                    "Import failed:",
+                    error
+                );
+            }
+
+
+            /*
+              Reset the file input so
+              the same backup can be
+              selected again later.
+            */
+
+            event.target.value =
+                "";
+        };
+
+
+    reader.onerror =
+        () => {
+
+            pendingImport =
+                null;
+
+            toast(
+                "❌ Could not read backup"
+            );
+
+            event.target.value =
+                "";
+        };
+
+
+    reader.readAsText(
+        file
+    );
+}
+
+
+function validateBackup(
+    backup
+) {
+
+    if (
+        !backup ||
+        backup.app !==
+            "health-campaign"
+    ) {
+
+        throw new Error(
+            "This file is not a Health Campaign backup."
+        );
+    }
+
+
+    if (
+        backup.version !== 1
+    ) {
+
+        throw new Error(
+            "Unsupported backup version."
+        );
+    }
+
+
+    if (
+        !backup.data ||
+        typeof backup.data !==
+            "object"
+    ) {
+
+        throw new Error(
+            "Backup data is missing."
+        );
+    }
+
+
+    if (
+        !backup.data.history ||
+        typeof backup.data.history !==
+            "object" ||
+        Array.isArray(
+            backup.data.history
+        )
+    ) {
+
+        throw new Error(
+            "Campaign history is invalid."
+        );
+    }
+
+
+    const weight =
+        Number(
+            backup.data.currentWeight
+        );
+
+
+    if (
+        !Number.isFinite(weight) ||
+        weight < 100 ||
+        weight > 500
+    ) {
+
+        throw new Error(
+            "Current weight is invalid."
+        );
+    }
+
+
+    Object.entries(
+        backup.data.history
+    )
+    .forEach(
+        ([date, record]) => {
+
+            if (
+                !/^\d{4}-\d{2}-\d{2}$/
+                .test(date)
+            ) {
+
+                throw new Error(
+                    `Invalid history date: ${date}`
+                );
+            }
+
+
+            if (
+                !record ||
+                typeof record !==
+                    "object"
+            ) {
+
+                throw new Error(
+                    `Invalid record for ${date}`
+                );
+            }
+
+
+            if (
+                !Array.isArray(
+                    record.quests
+                ) ||
+                record.quests.length !==
+                    QUESTS.length
+            ) {
+
+                throw new Error(
+                    `Invalid quest data for ${date}`
+                );
+            }
+
+
+            if (
+                !record.quests.every(
+                    value =>
+                        typeof value ===
+                        "boolean"
+                )
+            ) {
+
+                throw new Error(
+                    `Invalid quest values for ${date}`
+                );
+            }
+
+
+            const water =
+                Number(
+                    record.water || 0
+                );
+
+
+            if (
+                !Number.isFinite(water) ||
+                water < 0
+            ) {
+
+                throw new Error(
+                    `Invalid hydration data for ${date}`
+                );
+            }
+
+
+            if (
+                record.weight !==
+                    undefined
+            ) {
+
+                const recordWeight =
+                    Number(
+                        record.weight
+                    );
+
+
+                if (
+                    !Number.isFinite(
+                        recordWeight
+                    ) ||
+                    recordWeight < 100 ||
+                    recordWeight > 500
+                ) {
+
+                    throw new Error(
+                        `Invalid weight for ${date}`
+                    );
+                }
+            }
+        }
+    );
+}
+
+
 function showImportPreview(
     backup
 ) {
