@@ -1234,9 +1234,14 @@ function addCustomWater() {
 
 
     const amount =
-        Number(
-            input.value
-        );
+       Number(
+           input.value
+           .trim()
+           .replace(
+               ",",
+               "."
+           )
+       );
 
 
     if (
@@ -1262,6 +1267,8 @@ function addCustomWater() {
 
     input.value =
         "";
+
+    input.blur();
 
 
     autoHydrationQuest();
