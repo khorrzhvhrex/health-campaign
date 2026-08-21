@@ -1197,6 +1197,86 @@ document
 });
 
 
+document
+.getElementById(
+    "addCustomWater"
+)
+.addEventListener(
+    "click",
+    addCustomWater
+);
+
+
+document
+.getElementById(
+    "customWaterAmount"
+)
+.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            addCustomWater();
+        }
+    }
+);
+
+
+function addCustomWater() {
+
+    const input =
+        document.getElementById(
+            "customWaterAmount"
+        );
+
+
+    const amount =
+        Number(
+            input.value
+        );
+
+
+    if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+    ) {
+
+        toast(
+            "Enter a valid water amount"
+        );
+
+        return;
+    }
+
+
+    lastWaterChange =
+        amount;
+
+
+    todayRecord.water +=
+        amount;
+
+
+    input.value =
+        "";
+
+
+    autoHydrationQuest();
+
+    saveHistory();
+
+    updateUI();
+
+
+    toast(
+        `💧 +${amount} oz`
+    );
+}
+
+
 function autoHydrationQuest() {
 
     const hydrationIndex =
